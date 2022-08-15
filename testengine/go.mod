@@ -1,4 +1,4 @@
-module testengine
+module github.com/tolvmannen/digit/testengine
 
 go 1.17
 
