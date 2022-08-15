@@ -16,7 +16,9 @@ import (
 	//"gopkg.in/yaml.v2"
 
 	"github.com/miekg/dns"
-	"github.com/spf13/viper"
+	//"github.com/spf13/viper"
+	//"github.com/tolvmannen/digit/dig"
+	"github.com/tolvmannen/digit/dig"
 )
 
 func (o LabGroups) ShowMe() {
@@ -102,29 +104,38 @@ func mainloop() {
 
 func main() {
 
-	// Load Group- and Userdata
-	grp := viper.New()
-	grp.SetConfigFile("./tests/group.yaml")
-	err := grp.ReadInConfig()
-	if err := grp.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", grp.ConfigFileUsed())
-	} else {
-		fmt.Printf("Error: %v\n", err)
-	}
+	/*
+		// Load Group- and Userdata
+		grp := viper.New()
+		grp.SetConfigFile("./tests/group.yaml")
+		err := grp.ReadInConfig()
+		if err := grp.ReadInConfig(); err == nil {
+			fmt.Fprintln(os.Stderr, "Using config file:", grp.ConfigFileUsed())
+		} else {
+			fmt.Printf("Error: %v\n", err)
+		}
 
-	var lg LabGroups
-	err := grp.Unmarshal(&lg)
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-	}
-	lg.ShowMe()
+		var lg LabGroups
+		err := grp.Unmarshal(&lg)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+		lg.ShowMe()
 
-	conf := viper.New()
-	conf.SetConfigFile("./etc/conf.yaml")
-	err := conf.ReadInConfig()
-	if err != nil {
-		fmt.Printf("Error: %v\n", err)
-	}
+		conf := viper.New()
+		conf.SetConfigFile("./etc/conf.yaml")
+		err := conf.ReadInConfig()
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+
+	*/
+
+	var dp dig.DigParams
+	dp = digParams{"qname": "coffee.quiz6.examples.nu"}
+	var digdata dig.DigResult
+	digdata = dig.Dig(dp)
+	fmt.Printf("--\n%v\n--\n", digdata)
 
 	/*
 

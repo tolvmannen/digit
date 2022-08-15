@@ -7,7 +7,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-type digParams struct {
+type DigParams struct {
 	Short        bool
 	Dnssec       bool
 	Query        bool
@@ -38,7 +38,7 @@ type digParams struct {
 	Nameserver string
 }
 
-type digResult struct {
+type DigResult struct {
 	Result *dns.Msg
 	Errs   []string
 	Extras []string
