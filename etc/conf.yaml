@@ -1,0 +1,5 @@
+apiserver:
+   address:     127.0.0.1:8090
+   apikey:      you-have-stolen-my-frotzblinger
+   certFile:    ./etc/certs/localhost.crt
+   keyFile:     ./etc/certs/localhost.key

@@ -1,0 +1,20 @@
+groups:
+        - groupname: g1
+          domain: g1.examples.nu
+          ipv4: 10.0.0.1
+          user:
+               - name: bob
+                 key: >
+                          ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCohaK+5Y2cbaPvRZj/87EMQpW+EhzXRzGMrHZRsusxkMrxBs44ku5MAAtphJ2UFHi2YGljsC5vkvgp
+                          C0qvUrSGyEEIOaeTu2B+hiWniMyt1rNO5hFq5uJBN5iPgYb2a3850BcVG7q5YcSRgZuUBNYKTTTRCNnHuSsQM5GFU57YsX1KhlXyJIkXlNNhOC0Y9i7v
+                          fKxRE9TH9k96V8fBYLdVyA7xSHJGGENy4G8mEsioeHZBa2IK+sjErti/g2/B8zUGOb/Szr9rL0Mboj1KJ2bFccsVhXMqKON2P8JOBEikaMl/ZtsCYC/GnHE6fspdiU8WZHBvUXC7UQQe3L+PyzVV
+               - name: cat
+                 key: > 
+                         public
+        - groupname: g2 
+          domain: g2.examples.nu
+          ipv4: 10.0.0.2
+          user:
+               - name: pebbe
+                 key: > 
+                         secret

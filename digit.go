@@ -22,84 +22,12 @@ import (
 
 	//"gopkg.in/yaml.v2"
 	"github.com/miekg/dns"
+	//"github.com/spf13/viper"
 )
-
-type digParams struct {
-	Short        bool
-	Dnssec       bool
-	Query        bool
-	Check        bool
-	Six          bool
-	Four         bool
-	Anchor       string
-	Tsig         string
-	Port         int
-	Laddr        string
-	Aa           bool
-	Ad           bool
-	Cd           bool
-	Rd           bool
-	Fallback     bool
-	Tcp          bool
-	TimeoutDial  time.Duration
-	TimeoutRead  time.Duration
-	TimeoutWrite time.Duration
-	Nsid         bool
-	Client       string
-	Opcode       string
-	Rcode        string
-
-	Qclass     string
-	Qtype      string
-	Qname      string
-	Nameserver string
-}
-
-func (p *digParams) DefaultValues() {
-	if p.Port == 0 {
-		p.Port = 53
-	}
-	if p.TimeoutDial < 2*time.Second {
-		p.TimeoutDial = 2 * time.Second
-	}
-	if p.TimeoutDial < 2*time.Second {
-		p.TimeoutDial = 2 * time.Second
-	}
-	if p.TimeoutRead < 2*time.Second {
-		p.TimeoutRead = 2 * time.Second
-	}
-	if p.TimeoutWrite < 2*time.Second {
-		p.TimeoutWrite = 2 * time.Second
-	}
-	if p.Opcode == "" {
-		p.Opcode = "query"
-	}
-	if p.Rcode == "" {
-		p.Rcode = "success"
-	}
-}
 
 var dnskey *dns.DNSKEY
 
-func main() {
-	var batch []digParams
-
-	dp := digParams{Nameserver: "@1.1.1.1", Qname: "ungabunga.internetstiftelsen.se", Rd: true}
-	dp.DefaultValues()
-	batch = append(batch, dp)
-	//fmt.Printf("%+v\n", dp)
-	dp = digParams{Nameserver: "@9.9.9.9", Qname: "ungabunga.iis.se", Rd: true}
-	dp.DefaultValues()
-	batch = append(batch, dp)
-
-	for _, test := range batch {
-		dig(test)
-	}
-	//dig(batch[0])
-	//dig(batch[1])
-}
-
-func dig(p digParams) {
+func dig(p digParams) (digres digResult) {
 
 	var (
 		// function sets and uses these. leave for now.
@@ -111,19 +39,25 @@ func dig(p digParams) {
 		dnssec     bool   = p.Dnssec
 		fallback   bool   = p.Fallback
 		nameserver string = p.Nameserver
+
+		// I'm lazy, so put all the stuff to return in this thing here
+		//digres digResult
 	)
 
 	if p.Anchor != "" {
 		f, err := os.Open(p.Anchor)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failure to open %s: %s\n", p.Anchor, err.Error())
+			//fmt.Fprintf(os.Stderr, "Failure to open %s: %s\n", p.Anchor, err.Error())
+			digres.Errs = append(digres.Errs, fmt.Sprintf("Failure to open %s: %s\n", p.Anchor, err.Error()))
 		}
 		r, err := dns.ReadRR(f, p.Anchor)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failure to read an RR from %s: %s\n", p.Anchor, err.Error())
+			//fmt.Fprintf(os.Stderr, "Failure to read an RR from %s: %s\n", p.Anchor, err.Error())
+			digres.Errs = append(digres.Errs, fmt.Sprintf("Failure read an RR from %s: %s\n", p.Anchor, err.Error()))
 		}
 		if k, ok := r.(*dns.DNSKEY); !ok {
-			fmt.Fprintf(os.Stderr, "No DNSKEY read from %s\n", p.Anchor)
+			//fmt.Fprintf(os.Stderr, "No DNSKEY read from %s\n", p.Anchor)
+			digres.Errs = append(digres.Errs, fmt.Sprintf("No DNSKEY read from %s\n", p.Anchor))
 		} else {
 			dnskey = k
 		}
@@ -266,8 +200,9 @@ func dig(p digParams) {
 			}
 
 			if e.Address == nil {
-				fmt.Fprintf(os.Stderr, "Failure to parse IP address: %s\n", p.Client)
-				return
+				//fmt.Fprintf(os.Stderr, "Failure to parse IP address: %s\n", p.Client)
+				digres.Errs = append(digres.Errs, fmt.Sprintf("Failure to parse IP address: %s\n", p.Client))
+				//return
 			}
 
 			if e.Address.To4() == nil {
@@ -293,8 +228,9 @@ func dig(p digParams) {
 		}
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Dialing "+nameserver+" failed: "+err.Error()+"\n")
-			return
+			//fmt.Fprintf(os.Stderr, "Dialing "+nameserver+" failed: "+err.Error()+"\n")
+			digres.Errs = append(digres.Errs, fmt.Sprintf("Dialing "+nameserver+" failed: "+err.Error()+"\n"))
+			//return
 		}
 
 		defer co.Close()
@@ -315,7 +251,8 @@ func dig(p digParams) {
 					c.TsigSecret = map[string]string{name: secret}
 					t.TsigSecret = map[string]string{name: secret}
 				} else {
-					fmt.Fprintf(os.Stderr, ";; TSIG key data error\n")
+					//fmt.Fprintf(os.Stderr, ";; TSIG key data error\n")
+					digres.Errs = append(digres.Errs, fmt.Sprintf(";; TSIG key data error\n"))
 					continue
 				}
 			}
@@ -323,22 +260,26 @@ func dig(p digParams) {
 			co.SetWriteDeadline(time.Now().Add(p.TimeoutWrite))
 
 			if p.Query {
-				fmt.Printf("%s", m.String())
-				fmt.Printf("\n;; size: %d bytes\n\n", m.Len())
+				//fmt.Printf("%s", m.String())
+				//fmt.Printf("\n;; size: %d bytes\n\n", m.Len())
+				digres.Extras = append(digres.Extras, fmt.Sprintf("%s\n;; size: %d bytes\n\n", m.String(), m.Len()))
 			}
 			then := time.Now()
 			if err := co.WriteMsg(m); err != nil {
-				fmt.Fprintf(os.Stderr, ";; %s\n", err.Error())
+				//fmt.Fprintf(os.Stderr, ";; %s\n", err.Error())
+				digres.Errs = append(digres.Errs, fmt.Sprintf(";; %s\n", err.Error()))
 				continue
 			}
 			r, err := co.ReadMsg()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, ";; %s\n", err.Error())
+				//fmt.Fprintf(os.Stderr, ";; %s\n", err.Error())
+				digres.Errs = append(digres.Errs, fmt.Sprintf(";; %s\n", err.Error()))
 				continue
 			}
 			rtt := time.Since(then)
 			if r.Id != m.Id {
-				fmt.Fprintf(os.Stderr, "Id mismatch\n")
+				//fmt.Fprintf(os.Stderr, "Id mismatch\n")
+				digres.Errs = append(digres.Errs, fmt.Sprintf("Id mismatch\n"))
 				continue
 			}
 
@@ -351,8 +292,10 @@ func dig(p digParams) {
 				shortenMsg(r)
 			}
 
-			fmt.Printf("%v", r)
-			fmt.Printf("\n;; query time: %.3d µs, server: %s(%s), size: %d bytes\n", rtt/1e3, nameserver, tcp, r.Len())
+			//fmt.Printf("%v", r)
+			//fmt.Printf("\n;; query time: %.3d µs, server: %s(%s), size: %d bytes\n", rtt/1e3, nameserver, tcp, r.Len())
+			digres.Result = r
+			digres.Extras = append(digres.Extras, fmt.Sprintf("\n;; query time: %.3d µs, server: %s(%s), size: %d bytes\n", rtt/1e3, nameserver, tcp, r.Len()))
 		}
 		return
 	}
@@ -376,24 +319,28 @@ Query:
 				c.TsigSecret = map[string]string{name: secret}
 				t.TsigSecret = map[string]string{name: secret}
 			} else {
-				fmt.Fprintf(os.Stderr, "TSIG key data error\n")
+				//fmt.Fprintf(os.Stderr, "TSIG key data error\n")
+				digres.Errs = append(digres.Errs, fmt.Sprintf(";; TSIG key data error\n"))
 				continue
 			}
 		}
 		if p.Query {
-			fmt.Printf("%s", m.String())
-			fmt.Printf("\n;; size: %d bytes\n\n", m.Len())
+			//fmt.Printf("%s", m.String())
+			//fmt.Printf("\n;; size: %d bytes\n\n", m.Len())
+			digres.Extras = append(digres.Extras, fmt.Sprintf("%s\n;; size: %d bytes\n\n", m.String(), m.Len()))
 		}
 		if qt == dns.TypeAXFR || qt == dns.TypeIXFR {
 			env, err := t.In(m, nameserver)
 			if err != nil {
 				fmt.Printf(";; %s\n", err.Error())
+				//digres.Errs = append(digres.Errs, fmt.Printf(";; %s\n", err.Error()))
 				continue
 			}
 			var envelope, record int
 			for e := range env {
 				if e.Error != nil {
 					fmt.Printf(";; %s\n", e.Error.Error())
+					//digres.Errs = append(digres.Errs, fmt.Printf(";; %s\n", e.Error.Error()))
 					continue Query
 				}
 				for _, r := range e.RR {
@@ -439,7 +386,7 @@ Query:
 		}
 		if r.Id != m.Id {
 			fmt.Fprintf(os.Stderr, "Id mismatch\n")
-			return
+			//return
 		}
 
 		if p.Check {
@@ -455,9 +402,14 @@ Query:
 		//nsr := strings.Fields(r.Answer[0].String())
 		//fmt.Printf("YARR!\n %+v\n", nsr[len(nsr)-1])
 		//fmt.Printf("YARR!\n %+v\n", nsr[len(nsr)-1])
-		fmt.Printf("%v", r)
-		fmt.Printf("\n;; query time: %.3d µs, server: %s(%s), size: %d bytes\n", rtt/1e3, nameserver, c.Net, r.Len())
+		//fmt.Printf("%T", r)
+		//fmt.Printf("\n;; query time: %.3d µs, server: %s(%s), size: %d bytes\n", rtt/1e3, nameserver, c.Net, r.Len())
+
+		//fmt.Printf("%v", r)
+		digres.Result = r
+		digres.Extras = append(digres.Extras, fmt.Sprintf("\n;; query time: %.3d µs, server: %s(%s), size: %d bytes\n", rtt/1e3, nameserver, c.Net, r.Len()))
 	}
+	return
 }
 
 func tsigKeyParse(s string) (algo, name, secret string, ok bool) {
