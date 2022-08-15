@@ -1,4 +1,4 @@
-module github.com/tolvmannen/digit/dig 
+module github.com/tolvmannen/digit/dig
 
 go 1.17
 
