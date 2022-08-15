@@ -1,0 +1,29 @@
+lab1:
+    description:        
+    short:              
+    dnssec: 
+    query:
+    check:
+    six: 
+    four: 
+    anchor:     
+    tsig:       
+    port: 
+    laddr:      
+    aa:
+    ad:
+    cd:         true
+    rd:         false
+    fallback:
+    tcp:
+    timeoutdial: 
+    timeoutread:
+    timeoutwrite:
+    nsid:
+    client:
+    opcode:     
+    rcode:      
+    qclass:
+    qtype:      AXFR
+    qname:      quiz1.examples.nu
+    nameserver: 3.249.243.22    # labns1.examples.nu
