@@ -44,7 +44,7 @@ type DigResult struct {
 	Extras []string
 }
 
-func (p *digParams) DefaultValues() {
+func (p *DigParams) DefaultValues() {
 	if p.Port == 0 {
 		p.Port = 53
 	}
@@ -68,7 +68,7 @@ func (p *digParams) DefaultValues() {
 	}
 }
 
-func (p *digParams) UpdateFromMapString(params map[string]string) {
+func (p *DigParams) UpdateFromMapString(params map[string]string) {
 	for key, val := range params {
 		switch key {
 		case "short":

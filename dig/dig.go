@@ -27,7 +27,7 @@ import (
 
 var dnskey *dns.DNSKEY
 
-func Dig(p digParams) (digres digResult) {
+func Dig(p DigParams) (digres DigResult) {
 
 	var (
 		// function sets and uses these. leave for now.

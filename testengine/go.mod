@@ -2,6 +2,8 @@ module github.com/tolvmannen/digit/testengine
 
 go 1.17
 
+replace github.com/tolvmannen/digit/dig v0.0.0-20220815143258-1e861e583d8c => ../dig
+
 require (
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
